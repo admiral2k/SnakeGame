@@ -49,14 +49,13 @@ class EntityType(Enum):
 class Entity:
     x = None
     y = None
-    direction = None
+    direction = Direction.UP
     image = None
     entityType = None
 
-    def __init__(self, x, y, direction=Direction.NONE, entityType=EntityType.NONE):
+    def __init__(self, x, y, direction=Direction.UP, entityType=EntityType.NONE):
         self.x = x
         self.y = y
-        self.direction = direction
         self.entityType = entityType
 
         if self.entityType == EntityType.GRASS:
@@ -72,8 +71,9 @@ class Entity:
         elif self.entityType == EntityType.YAMMY:
             self.image = YAMMY_IMAGE
 
+        self.change_direction(direction)
 
-def change_direction(self, direction):
+    def change_direction(self, direction):
         # When direction changes, entity image rotates
         rotation_angle = 90 * (self.direction.value - direction.value)
         self.image = pygame.transform.rotate(self.image, rotation_angle)
@@ -98,29 +98,49 @@ class Snake:
     head = None
     body = None
 
+    def __init__(self, x=1, y=1, direction=Direction.LEFT):
+        head = Entity(x, y, direction, EntityType.SNAKE_HEAD)
+        body = []
+
+    def grow(self):
+        pass
 
 
-def draw_window():
-    for x in range(10):
-        for y in range(10):
-            WIN.blit(GRASS_IMAGE, (x * CELL_SIZE, y * CELL_SIZE))
-            if x in [0, 9]:
-                WIN.blit(FENCE_IMAGE, (x * CELL_SIZE, y * CELL_SIZE))
-            if y in [0, 9]:
-                WIN.blit(pygame.transform.rotate(FENCE_IMAGE, 90), (x * CELL_SIZE, y * CELL_SIZE))
-                if y == 0 and x == 0:
-                    WIN.blit(ANGLED_FENCE_IMAGE, (x * CELL_SIZE, y * CELL_SIZE))
-                elif y == 0 and x == 9:
-                    WIN.blit(pygame.transform.rotate(ANGLED_FENCE_IMAGE, -90), (x * CELL_SIZE, y * CELL_SIZE))
-                elif y == 9 and x == 9:
-                    WIN.blit(pygame.transform.rotate(ANGLED_FENCE_IMAGE, 180), (x * CELL_SIZE, y * CELL_SIZE))
-                elif y == 9 and x == 0:
-                    WIN.blit(pygame.transform.rotate(ANGLED_FENCE_IMAGE, 90), (x * CELL_SIZE, y * CELL_SIZE))
+class GameField:
+    cells = None
 
+    def __init__(self):
+        self.cells = [[None for i in range(10)] for i in range(10)]
+
+        for x in range(10):
+            for y in range(10):
+                if x in [0, 9]:
+                    if y == 0 and x == 0:
+                        temp = Entity(x * CELL_SIZE, y * CELL_SIZE, Direction.UP, EntityType.ANGLED_FENCE)
+                    elif y == 0 and x == 9:
+                        temp = Entity(x * CELL_SIZE, y * CELL_SIZE, Direction.RIGHT, EntityType.ANGLED_FENCE)
+                    elif y == 9 and x == 9:
+                        temp = Entity(x * CELL_SIZE, y * CELL_SIZE, Direction.DOWN, EntityType.ANGLED_FENCE)
+                    elif y == 9 and x == 0:
+                        temp = Entity(x * CELL_SIZE, y * CELL_SIZE, Direction.LEFT, EntityType.ANGLED_FENCE)
+                    else:
+                        temp = Entity(x * CELL_SIZE, y * CELL_SIZE, Direction.UP, EntityType.FENCE)
+                elif y in [0, 9]:
+                    temp = Entity(x * CELL_SIZE, y * CELL_SIZE, Direction.RIGHT, EntityType.FENCE)
+                else:
+                    temp = Entity(x * CELL_SIZE, y * CELL_SIZE, Direction.UP, EntityType.GRASS)
+                self.cells[x][y] = temp
+
+
+def draw_window(game_field:GameField):
+    for cells in game_field.cells:
+        for cell in cells:
+            WIN.blit(cell.image, (cell.x, cell.y))
     pygame.display.update()
 
 
 def main():
+    gameField = GameField()
     clock = pygame.time.Clock()
     run = True
     while run:
@@ -137,7 +157,7 @@ def main():
             if event.type == MOVE_TIME:
                 pass
 
-        draw_window()
+        draw_window(gameField)
 
 
 if __name__ == "__main__":
