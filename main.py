@@ -107,8 +107,9 @@ class Snake:
         self.head = Entity(x, y, direction, EntityType.SNAKE_HEAD)
         self.body = [Entity(x-1, y, direction, EntityType.SNAKE_BODY), Entity(x-2, y, direction, EntityType.SNAKE_BODY), Entity(x-3, y, direction, EntityType.SNAKE_BODY)]
 
-    def eat_yammy(self):
+    def eat_yammy(self, gameField):
         self.body.append(Entity(self.last_piece_x, self.last_piece_y, self.last_piece_direction, EntityType.SNAKE_BODY))
+        gameField.spawn_yammy()
 
     def move(self, gameField):
         # Saving last piece coordinates to move next piece
@@ -117,12 +118,20 @@ class Snake:
         self.last_piece_direction = self.head.direction
 
         if self.head.direction == Direction.RIGHT:
+            if gameField.cells[self.head.x + 1][self.head.y].entityType == EntityType.YAMMY:
+                self.eat_yammy(gameField)
             self.head.x += 1
         elif self.head.direction == Direction.LEFT:
+            if gameField.cells[self.head.x - 1][self.head.y].entityType == EntityType.YAMMY:
+                self.eat_yammy(gameField)
             self.head.x -= 1
         elif self.head.direction == Direction.DOWN:
+            if gameField.cells[self.head.x][self.head.y + 1].entityType == EntityType.YAMMY:
+                self.eat_yammy(gameField)
             self.head.y += 1
         elif self.head.direction == Direction.UP:
+            if gameField.cells[self.head.x][self.head.y - 1].entityType == EntityType.YAMMY:
+                self.eat_yammy(gameField)
             self.head.y -= 1
 
         # moving the body
