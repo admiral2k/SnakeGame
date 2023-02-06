@@ -26,6 +26,7 @@ GRASS_IMAGE = pygame.image.load(os.path.join("Assets", "grass.png"))
 FENCE_IMAGE = pygame.image.load(os.path.join("Assets", "fence_straight.png"))
 ANGLED_FENCE_IMAGE = pygame.image.load(os.path.join("Assets", "fence_angled.png"))
 SNAKE_HEAD_IMAGE = pygame.image.load(os.path.join("Assets", "snake_head.png"))
+SNAKE_HEAD_DEAD_IMAGE = pygame.image.load(os.path.join("Assets", "snake_head_dead.png"))
 SNAKE_BODY_IMAGE = pygame.image.load(os.path.join("Assets", "snake_body.png"))
 YAMMY_IMAGE = pygame.image.load(os.path.join("Assets", "yammy.png"))
 
@@ -102,47 +103,92 @@ class Snake:
     last_piece_x = None
     last_piece_y = None
     last_piece_direction = None
+    alive = True
 
-    def __init__(self, x=4, y=1, direction=Direction.RIGHT):
+    def __init__(self, x=1, y=1, direction=Direction.RIGHT):
         self.head = Entity(x, y, direction, EntityType.SNAKE_HEAD)
-        self.body = [Entity(x-1, y, direction, EntityType.SNAKE_BODY), Entity(x-2, y, direction, EntityType.SNAKE_BODY), Entity(x-3, y, direction, EntityType.SNAKE_BODY)]
+        self.body = []
 
     def eat_yammy(self, gameField):
         self.body.append(Entity(self.last_piece_x, self.last_piece_y, self.last_piece_direction, EntityType.SNAKE_BODY))
         gameField.spawn_yammy()
 
     def move(self, gameField):
+        # end-game entities
+        end_game_entities = [EntityType.ANGLED_FENCE, EntityType.FENCE, EntityType.SNAKE_BODY]
+
         # Saving last piece coordinates to move next piece
         self.last_piece_x = self.head.x
         self.last_piece_y = self.head.y
         self.last_piece_direction = self.head.direction
 
         if self.head.direction == Direction.RIGHT:
-            if gameField.cells[self.head.x + 1][self.head.y].entityType == EntityType.YAMMY:
+            # defining cell to move
+            cell_to_move = gameField.cells[self.head.x + 1][self.head.y]
+
+            # moving into yammy
+            if cell_to_move.entityType == EntityType.YAMMY:
                 self.eat_yammy(gameField)
-            self.head.x += 1
+
+            # moving into fence or body
+            elif cell_to_move.entityType in end_game_entities:
+                end_game(self, gameField)
+
         elif self.head.direction == Direction.LEFT:
-            if gameField.cells[self.head.x - 1][self.head.y].entityType == EntityType.YAMMY:
+            # defining cell to move
+            cell_to_move = gameField.cells[self.head.x - 1][self.head.y]
+
+            # moving into yammy
+            if cell_to_move.entityType == EntityType.YAMMY:
                 self.eat_yammy(gameField)
-            self.head.x -= 1
+
+            # moving into fence or body
+            elif cell_to_move.entityType in end_game_entities:
+                end_game(self, gameField)
+
         elif self.head.direction == Direction.DOWN:
-            if gameField.cells[self.head.x][self.head.y + 1].entityType == EntityType.YAMMY:
+            # defining cell to move
+            cell_to_move = gameField.cells[self.head.x][self.head.y + 1]
+
+            # moving into yammy
+            if cell_to_move.entityType == EntityType.YAMMY:
                 self.eat_yammy(gameField)
-            self.head.y += 1
+
+            # moving into fence or body
+            elif cell_to_move.entityType in end_game_entities:
+                end_game(self, gameField)
+
         elif self.head.direction == Direction.UP:
-            if gameField.cells[self.head.x][self.head.y - 1].entityType == EntityType.YAMMY:
+            # defining cell to move
+            cell_to_move = gameField.cells[self.head.x][self.head.y - 1]
+
+            # moving into yammy
+            if cell_to_move.entityType == EntityType.YAMMY:
                 self.eat_yammy(gameField)
-            self.head.y -= 1
 
-        # moving the body
-        for piece in self.body:
-            self.last_piece_x, self.last_piece_y, piece.x, piece.y = piece.x, piece.y, self.last_piece_x, self.last_piece_y
-            temp = piece.direction
-            piece.change_direction(self.last_piece_direction)
-            self.last_piece_direction = temp
+            # moving into fence or body
+            elif cell_to_move.entityType in end_game_entities:
+                end_game(self, gameField)
 
-        gameField.cells[self.last_piece_x][self.last_piece_y] = Entity(self.last_piece_x, self.last_piece_y, entityType=EntityType.GRASS)
+        if self.alive:
+            # moving the head
+            self.head.x, self.head.y = cell_to_move.x, cell_to_move.y
 
+            # moving the body
+            for piece in self.body:
+                self.last_piece_x, self.last_piece_y, piece.x, piece.y = piece.x, piece.y, self.last_piece_x, self.last_piece_y
+                temp = piece.direction
+                piece.change_direction(self.last_piece_direction)
+                self.last_piece_direction = temp
+
+            # filling the empty cell with grass
+            gameField.cells[self.last_piece_x][self.last_piece_y] = Entity(self.last_piece_x, self.last_piece_y, entityType=EntityType.GRASS)
+
+    def die(self):
+        self.head.image = SNAKE_HEAD_DEAD_IMAGE
+        rotation_angle = 90 * (Direction.UP.value - self.head.direction.value)
+        self.head.image = pygame.transform.rotate(self.head.image, rotation_angle)
+        self.alive = False
 
 
 class GameField:
@@ -205,6 +251,12 @@ def draw_window(game_field: GameField):
     pygame.display.update()
 
 
+def end_game(snake: Snake, gameField: GameField):
+    snake.die()
+    gameField.update_snake()
+    pygame.display.update()
+
+
 def main():
     snake = Snake()
     gameField = GameField(snake)
@@ -219,31 +271,32 @@ def main():
                 run = False
                 pygame.quit()
             if event.type == pygame.KEYDOWN:
-
-                if event.key in [pygame.K_a, pygame.K_LEFT]:
-                    if len(snake.body):
-                        if snake.body[0].direction != Direction.RIGHT:
+                if snake.alive:
+                    if event.key in [pygame.K_a, pygame.K_LEFT]:
+                        if len(snake.body):
+                            if snake.body[0].direction != Direction.RIGHT:
+                                snake.head.change_direction(Direction.LEFT)
+                        else:
                             snake.head.change_direction(Direction.LEFT)
-                    else:
-                        snake.head.change_direction(Direction.LEFT)
-                if event.key in [pygame.K_w, pygame.K_UP]:
-                    if len(snake.body):
-                        if snake.body[0].direction != Direction.DOWN:
+                    if event.key in [pygame.K_w, pygame.K_UP]:
+                        if len(snake.body):
+                            if snake.body[0].direction != Direction.DOWN:
+                                snake.head.change_direction(Direction.UP)
+                        else:
                             snake.head.change_direction(Direction.UP)
-                    else:
-                        snake.head.change_direction(Direction.UP)
-                if event.key in [pygame.K_d, pygame.K_RIGHT]:
-                    if len(snake.body):
-                        if snake.body[0].direction != Direction.LEFT:
+                    if event.key in [pygame.K_d, pygame.K_RIGHT]:
+                        if len(snake.body):
+                            if snake.body[0].direction != Direction.LEFT:
+                                snake.head.change_direction(Direction.RIGHT)
+                        else:
                             snake.head.change_direction(Direction.RIGHT)
-                    else:
-                        snake.head.change_direction(Direction.RIGHT)
-                if event.key in [pygame.K_s, pygame.K_DOWN]:
-                    if len(snake.body):
-                        if snake.body[0].direction != Direction.UP:
+                    if event.key in [pygame.K_s, pygame.K_DOWN]:
+                        if len(snake.body):
+                            if snake.body[0].direction != Direction.UP:
+                                snake.head.change_direction(Direction.DOWN)
+                        else:
                             snake.head.change_direction(Direction.DOWN)
-                    else:
-                        snake.head.change_direction(Direction.DOWN)
+
             # Moving the snake
             # This event occurs each 2000 / SNAKE_SPEED ms
             if event.type == MOVE_TIME:
