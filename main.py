@@ -171,8 +171,9 @@ class GameField:
             self.cells[body_part.x][body_part.y] = body_part
 
         # placing the yammy
-        self.cells[self.yammy.x][self.yammy.y] = self.yammy
         self.yammy = Entity(*self.get_random_free_coordinates(), entityType=EntityType.YAMMY)
+        self.cells[self.yammy.x][self.yammy.y] = self.yammy
+
 
     def update_snake(self):
         self.cells[self.snake.head.x][self.snake.head.y] = self.snake.head
