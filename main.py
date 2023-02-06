@@ -98,49 +98,69 @@ class Snake:
     head = None
     body = None
 
-    def __init__(self, x=1, y=1, direction=Direction.LEFT):
-        head = Entity(x, y, direction, EntityType.SNAKE_HEAD)
-        body = []
+    def __init__(self, x=1, y=1, direction=Direction.RIGHT):
+        self.head = Entity(x, y, direction, EntityType.SNAKE_HEAD)
+        self.body = []
 
-    def grow(self):
-        pass
+    def move(self):
+        if self.head.direction == Direction.RIGHT:
+            self.head.x += 1
+        elif self.head.direction == Direction.LEFT:
+            self.head.x -= 1
+        elif self.head.direction == Direction.DOWN:
+            self.head.y += 1
+        elif self.head.direction == Direction.UP:
+            self.head.y -= 1
 
 
 class GameField:
     cells = None
+    snake = None
 
-    def __init__(self):
+    def __init__(self, snake: Snake):
         self.cells = [[None for i in range(10)] for i in range(10)]
+        self.snake = snake
 
         for x in range(10):
             for y in range(10):
                 if x in [0, 9]:
                     if y == 0 and x == 0:
-                        temp = Entity(x * CELL_SIZE, y * CELL_SIZE, Direction.UP, EntityType.ANGLED_FENCE)
+                        temp = Entity(x, y, Direction.UP, EntityType.ANGLED_FENCE)
                     elif y == 0 and x == 9:
-                        temp = Entity(x * CELL_SIZE, y * CELL_SIZE, Direction.RIGHT, EntityType.ANGLED_FENCE)
+                        temp = Entity(x, y, Direction.RIGHT, EntityType.ANGLED_FENCE)
                     elif y == 9 and x == 9:
-                        temp = Entity(x * CELL_SIZE, y * CELL_SIZE, Direction.DOWN, EntityType.ANGLED_FENCE)
+                        temp = Entity(x, y, Direction.DOWN, EntityType.ANGLED_FENCE)
                     elif y == 9 and x == 0:
-                        temp = Entity(x * CELL_SIZE, y * CELL_SIZE, Direction.LEFT, EntityType.ANGLED_FENCE)
+                        temp = Entity(x, y, Direction.LEFT, EntityType.ANGLED_FENCE)
                     else:
-                        temp = Entity(x * CELL_SIZE, y * CELL_SIZE, Direction.UP, EntityType.FENCE)
+                        temp = Entity(x, y, Direction.UP, EntityType.FENCE)
                 elif y in [0, 9]:
-                    temp = Entity(x * CELL_SIZE, y * CELL_SIZE, Direction.RIGHT, EntityType.FENCE)
+                    temp = Entity(x, y, Direction.RIGHT, EntityType.FENCE)
                 else:
-                    temp = Entity(x * CELL_SIZE, y * CELL_SIZE, Direction.UP, EntityType.GRASS)
+                    temp = Entity(x, y, Direction.UP, EntityType.GRASS)
                 self.cells[x][y] = temp
 
+            self.cells[snake.head.x][snake.head.y] = snake.head
+            for body_part in snake.body:
+                self.cells[body_part.x][body_part.y] = body_part
 
-def draw_window(game_field:GameField):
+    def update_snake(self):
+        self.cells[self.snake.head.x][self.snake.head.y] = self.snake.head
+        for body_part in self.snake.body:
+            self.cells[body_part.x][body_part.y] = body_part
+
+
+
+def draw_window(game_field: GameField):
     for cells in game_field.cells:
         for cell in cells:
-            WIN.blit(cell.image, (cell.x, cell.y))
+            WIN.blit(cell.image, (cell.x * CELL_SIZE, cell.y * CELL_SIZE))
     pygame.display.update()
 
 
 def main():
-    gameField = GameField()
+    snake = Snake()
+    gameField = GameField(snake)
     clock = pygame.time.Clock()
     run = True
     while run:
@@ -151,11 +171,20 @@ def main():
             if event.type == pygame.QUIT:
                 run = False
                 pygame.quit()
-
+            if event.type == pygame.KEYDOWN:
+                if event.key in [pygame.K_a, pygame.K_LEFT]:
+                    snake.head.change_direction(Direction.LEFT)
+                if event.key in [pygame.K_w, pygame.K_UP]:
+                    snake.head.change_direction(Direction.UP)
+                if event.key in [pygame.K_d, pygame.K_RIGHT]:
+                    snake.head.change_direction(Direction.RIGHT)
+                if event.key in [pygame.K_s, pygame.K_DOWN]:
+                    snake.head.change_direction(Direction.DOWN)
             # Moving the snake
             # This event occurs each 2000 / SNAKE_SPEED ms
             if event.type == MOVE_TIME:
-                pass
+                snake.move()
+                gameField.__init__(snake)
 
         draw_window(gameField)
 
