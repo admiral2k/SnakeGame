@@ -1,4 +1,6 @@
 from enum import Enum
+from random import randint
+
 
 import pygame
 import os
@@ -108,7 +110,7 @@ class Snake:
     def eat_yammy(self):
         self.body.append(Entity(self.last_piece_x, self.last_piece_y, self.last_piece_direction, EntityType.SNAKE_BODY))
 
-    def move(self):
+    def move(self, gameField):
         # Saving last piece coordinates to move next piece
         self.last_piece_x = self.head.x
         self.last_piece_y = self.head.y
@@ -130,14 +132,14 @@ class Snake:
             piece.change_direction(self.last_piece_direction)
             self.last_piece_direction = temp
 
+        gameField.cells[self.last_piece_x][self.last_piece_y] = Entity(self.last_piece_x, self.last_piece_y, entityType=EntityType.GRASS)
 
-class Yammy:
-    pass
 
 
 class GameField:
     cells = None
     snake = None
+    yammy = None
 
     def __init__(self, snake: Snake):
         self.cells = [[None for i in range(10)] for i in range(10)]
@@ -162,14 +164,23 @@ class GameField:
                     temp = Entity(x, y, Direction.UP, EntityType.GRASS)
                 self.cells[x][y] = temp
 
-            self.cells[snake.head.x][snake.head.y] = snake.head
-            for body_part in snake.body:
-                self.cells[body_part.x][body_part.y] = body_part
+        self.yammy = Entity(*self.get_random_free_coordinates(), entityType=EntityType.YAMMY)
+
+        self.cells[snake.head.x][snake.head.y] = snake.head
+        self.cells[self.yammy.x][self.yammy.y] = self.yammy
+        for body_part in snake.body:
+            self.cells[body_part.x][body_part.y] = body_part
 
     def update_snake(self):
         self.cells[self.snake.head.x][self.snake.head.y] = self.snake.head
         for body_part in self.snake.body:
             self.cells[body_part.x][body_part.y] = body_part
+
+    def get_random_free_coordinates(self):
+        x, y = 0, 0
+        while self.cells[x][y].entityType != EntityType.GRASS:
+            x, y = randint(1, 8), randint(1, 8)
+        return x, y
 
 
 def draw_window(game_field: GameField):
@@ -204,9 +215,8 @@ def main():
             # Moving the snake
             # This event occurs each 2000 / SNAKE_SPEED ms
             if event.type == MOVE_TIME:
-                snake.move()
-                # TODO optimize
-                gameField.__init__(snake)
+                snake.move(gameField)
+                gameField.update_snake()
 
         draw_window(gameField)
 
