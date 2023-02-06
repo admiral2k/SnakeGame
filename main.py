@@ -97,12 +97,23 @@ class Entity:
 class Snake:
     head = None
     body = None
+    last_piece_x = None
+    last_piece_y = None
+    last_piece_direction = None
 
-    def __init__(self, x=1, y=1, direction=Direction.RIGHT):
+    def __init__(self, x=4, y=1, direction=Direction.RIGHT):
         self.head = Entity(x, y, direction, EntityType.SNAKE_HEAD)
-        self.body = []
+        self.body = [Entity(x-1, y, direction, EntityType.SNAKE_BODY), Entity(x-2, y, direction, EntityType.SNAKE_BODY), Entity(x-3, y, direction, EntityType.SNAKE_BODY)]
+
+    def eat_yammy(self):
+        self.body.append(Entity(self.last_piece_x, self.last_piece_y, self.last_piece_direction, EntityType.SNAKE_BODY))
 
     def move(self):
+        # Saving last piece coordinates to move next piece
+        self.last_piece_x = self.head.x
+        self.last_piece_y = self.head.y
+        self.last_piece_direction = self.head.direction
+
         if self.head.direction == Direction.RIGHT:
             self.head.x += 1
         elif self.head.direction == Direction.LEFT:
@@ -111,6 +122,17 @@ class Snake:
             self.head.y += 1
         elif self.head.direction == Direction.UP:
             self.head.y -= 1
+
+        # moving the body
+        for piece in self.body:
+            self.last_piece_x, self.last_piece_y, piece.x, piece.y = piece.x, piece.y, self.last_piece_x, self.last_piece_y
+            temp = piece.direction
+            piece.change_direction(self.last_piece_direction)
+            self.last_piece_direction = temp
+
+
+class Yammy:
+    pass
 
 
 class GameField:
@@ -150,7 +172,6 @@ class GameField:
             self.cells[body_part.x][body_part.y] = body_part
 
 
-
 def draw_window(game_field: GameField):
     for cells in game_field.cells:
         for cell in cells:
@@ -184,6 +205,7 @@ def main():
             # This event occurs each 2000 / SNAKE_SPEED ms
             if event.type == MOVE_TIME:
                 snake.move()
+                # TODO optimize
                 gameField.__init__(snake)
 
         draw_window(gameField)
