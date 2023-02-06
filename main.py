@@ -145,6 +145,7 @@ class GameField:
         self.cells = [[None for i in range(10)] for i in range(10)]
         self.snake = snake
 
+        # placing the basic field
         for x in range(10):
             for y in range(10):
                 if x in [0, 9]:
@@ -164,12 +165,14 @@ class GameField:
                     temp = Entity(x, y, Direction.UP, EntityType.GRASS)
                 self.cells[x][y] = temp
 
-        self.yammy = Entity(*self.get_random_free_coordinates(), entityType=EntityType.YAMMY)
-
+        # placing the snake
         self.cells[snake.head.x][snake.head.y] = snake.head
-        self.cells[self.yammy.x][self.yammy.y] = self.yammy
         for body_part in snake.body:
             self.cells[body_part.x][body_part.y] = body_part
+
+        # placing the yammy
+        self.cells[self.yammy.x][self.yammy.y] = self.yammy
+        self.yammy = Entity(*self.get_random_free_coordinates(), entityType=EntityType.YAMMY)
 
     def update_snake(self):
         self.cells[self.snake.head.x][self.snake.head.y] = self.snake.head
