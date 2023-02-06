@@ -171,9 +171,7 @@ class GameField:
             self.cells[body_part.x][body_part.y] = body_part
 
         # placing the yammy
-        self.yammy = Entity(*self.get_random_free_coordinates(), entityType=EntityType.YAMMY)
-        self.cells[self.yammy.x][self.yammy.y] = self.yammy
-
+        self.spawn_yammy()
 
     def update_snake(self):
         self.cells[self.snake.head.x][self.snake.head.y] = self.snake.head
@@ -185,6 +183,10 @@ class GameField:
         while self.cells[x][y].entityType != EntityType.GRASS:
             x, y = randint(1, 8), randint(1, 8)
         return x, y
+
+    def spawn_yammy(self):
+        self.yammy = Entity(*self.get_random_free_coordinates(), entityType=EntityType.YAMMY)
+        self.cells[self.yammy.x][self.yammy.y] = self.yammy
 
 
 def draw_window(game_field: GameField):
@@ -208,14 +210,31 @@ def main():
                 run = False
                 pygame.quit()
             if event.type == pygame.KEYDOWN:
+
                 if event.key in [pygame.K_a, pygame.K_LEFT]:
-                    snake.head.change_direction(Direction.LEFT)
+                    if len(snake.body):
+                        if snake.body[0].direction != Direction.RIGHT:
+                            snake.head.change_direction(Direction.LEFT)
+                    else:
+                        snake.head.change_direction(Direction.LEFT)
                 if event.key in [pygame.K_w, pygame.K_UP]:
-                    snake.head.change_direction(Direction.UP)
+                    if len(snake.body):
+                        if snake.body[0].direction != Direction.DOWN:
+                            snake.head.change_direction(Direction.UP)
+                    else:
+                        snake.head.change_direction(Direction.UP)
                 if event.key in [pygame.K_d, pygame.K_RIGHT]:
-                    snake.head.change_direction(Direction.RIGHT)
+                    if len(snake.body):
+                        if snake.body[0].direction != Direction.LEFT:
+                            snake.head.change_direction(Direction.RIGHT)
+                    else:
+                        snake.head.change_direction(Direction.RIGHT)
                 if event.key in [pygame.K_s, pygame.K_DOWN]:
-                    snake.head.change_direction(Direction.DOWN)
+                    if len(snake.body):
+                        if snake.body[0].direction != Direction.UP:
+                            snake.head.change_direction(Direction.DOWN)
+                    else:
+                        snake.head.change_direction(Direction.DOWN)
             # Moving the snake
             # This event occurs each 2000 / SNAKE_SPEED ms
             if event.type == MOVE_TIME:
