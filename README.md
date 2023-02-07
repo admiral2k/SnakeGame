@@ -90,3 +90,12 @@ All the assets were drawn by myself. Each asset matches the **64*64** size.
   
     ![Yammy](/Assets/yammy.png)
 </details>
+
+## Game Preview
+![snake](https://user-images.githubusercontent.com/59295777/217119621-a8ffee4e-f45a-4b56-b336-c2a33275dcc9.gif)
+
+## TODO/Ideas
+- End screen
+- Win screen
+- Angled snake
+- Score system
