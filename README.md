@@ -70,4 +70,23 @@ All the assets were drawn by myself. Each asset matches the **64*64** size.
   
     ![fence_angled](/Assets/fence_angled.png)
   
+  - fence_straight.png
+  
+    ![fence_straight](/Assets/fence_straight.png)
+  
+  - snake_head.png
+  
+    ![snake_head](/Assets/snake_head.png)
+
+  - snake_head_dead.png
+  
+    ![snake_head_dead](/Assets/snake_head_dead.png)
+  
+  - snake_body.png
+  
+    ![snake_body](/Assets/snake_body.png)
+
+  - yammy.png
+  
+    ![Yammy](/Assets/yammy.png)
 </details>
