@@ -15,7 +15,7 @@ pygame.display.set_caption("SnakeGame!")
 
 CELL_SIZE = 64
 
-SNAKE_SPEED = 2
+SNAKE_SPEED = 5
 MOVE_TIME = pygame.USEREVENT + 1
 pygame.time.set_timer(MOVE_TIME, int(2000 / SNAKE_SPEED))
 
@@ -110,6 +110,7 @@ class Snake:
         self.body = []
 
     def eat_yammy(self, gameField):
+        PICKUP_SOUND.play()
         self.body.append(Entity(self.last_piece_x, self.last_piece_y, self.last_piece_direction, EntityType.SNAKE_BODY))
         gameField.spawn_yammy()
 
@@ -185,10 +186,13 @@ class Snake:
             gameField.cells[self.last_piece_x][self.last_piece_y] = Entity(self.last_piece_x, self.last_piece_y, entityType=EntityType.GRASS)
 
     def die(self):
+        if self.alive:
+            HIT_SOUND.play()
         self.head.image = SNAKE_HEAD_DEAD_IMAGE
         rotation_angle = 90 * (Direction.UP.value - self.head.direction.value)
         self.head.image = pygame.transform.rotate(self.head.image, rotation_angle)
         self.alive = False
+
 
 
 class GameField:
